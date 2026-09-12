@@ -12,12 +12,14 @@ from sqlalchemy.orm import Session
 from app.domain import FaqRecord, LeadCandidate, ProjectUnit, SalespersonRecord, SlotRecord
 from app.models import (
     AppointmentSlot,
+    CallTranscript,
     EscalationTicket,
     Faq,
     Lead,
     LeadEvent,
     Project,
     ProjectUnitRow,
+    QualityReview,
     Salesperson,
     SalespersonProject,
 )
@@ -386,3 +388,78 @@ def update_escalation(db: Session, ticket_id: int, fields: dict) -> Optional[Esc
         if value is not None:
             setattr(ticket, key, value)
     return ticket
+
+
+# ---------------------------------------------------------------------------
+# Dashboard reads (Phase 5)
+# ---------------------------------------------------------------------------
+
+
+def list_projects(db: Session) -> List[Project]:
+    return db.scalars(select(Project).order_by(Project.project_id)).all()
+
+
+def get_project_with_units(db: Session, project_id: str):
+    project = db.get(Project, project_id)
+    if not project:
+        return None
+    units = db.scalars(
+        select(ProjectUnitRow).where(ProjectUnitRow.project_id == project_id)
+    ).all()
+    return {"project": project, "units": units}
+
+
+def list_units_by_project(db: Session) -> Dict[str, list]:
+    rows = db.scalars(select(ProjectUnitRow)).all()
+    by_project: Dict[str, list] = {}
+    for r in rows:
+        by_project.setdefault(r.project_id, []).append(r)
+    return by_project
+
+
+def list_salespeople(db: Session) -> List[Salesperson]:
+    return db.scalars(select(Salesperson).order_by(Salesperson.salesperson_id)).all()
+
+
+def get_projects_for_salesperson(db: Session, salesperson_id: str) -> List[str]:
+    return list(
+        db.scalars(
+            select(SalespersonProject.project_id).where(
+                SalespersonProject.salesperson_id == salesperson_id
+            )
+        ).all()
+    )
+
+
+def get_all_workload(db: Session) -> Dict[str, int]:
+    stmt = (
+        select(Lead.assigned_salesperson_id, func.count(Lead.lead_id))
+        .where(Lead.assigned_salesperson_id.isnot(None))
+        .where(Lead.status.notin_(CLOSED_STATUSES))
+        .group_by(Lead.assigned_salesperson_id)
+    )
+    return dict(db.execute(stmt).all())
+
+
+def list_quality_reviews(db: Session) -> List[dict]:
+    stmt = (
+        select(QualityReview, CallTranscript)
+        .join(CallTranscript, CallTranscript.call_id == QualityReview.call_id)
+        .order_by(QualityReview.created_at.desc())
+    )
+    rows = db.execute(stmt).all()
+    return [{"review": review, "call": call} for review, call in rows]
+
+
+def get_all_lead_statuses(db: Session) -> List[str]:
+    return list(db.scalars(select(Lead.status)).all())
+
+
+def update_lead_fields(db: Session, lead_id: str, fields: dict) -> Optional[Lead]:
+    lead = db.get(Lead, lead_id)
+    if not lead:
+        return None
+    for key, value in fields.items():
+        if value is not None:
+            setattr(lead, key, value)
+    return lead

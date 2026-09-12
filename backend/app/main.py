@@ -1,6 +1,7 @@
 from typing import Optional
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from app import followups, repositories
@@ -9,6 +10,7 @@ from app.db import get_db
 from app.escalation_service import handle_question
 from app.pipeline import run_capture_pipeline
 from app.schemas import (
+    CallTranscriptOut,
     ClassifyRequest,
     ClassifyResponse,
     ContactOutcomeRequest,
@@ -20,17 +22,32 @@ from app.schemas import (
     LeadDetailResponse,
     LeadOut,
     LeadPipelineResponse,
+    LeadUpdateRequest,
+    ProjectOut,
+    ProjectUnitOut,
+    QualityReviewOut,
     QuestionRequest,
     QuestionResponse,
     ReplyRequest,
+    SalespersonOut,
     SlotActionRequest,
     SlotActionResponse,
     SlotCancelRequest,
     SlotOut,
 )
 from app.services.escalation import classify_risk
+from app.services.metrics import compute_funnel
 
 app = FastAPI(title="XYZ Properties Lead Conversion Demo API")
+
+# Demo-only: the dashboard is a separate Next.js dev server on another port.
+# Lock this down to real origins before any non-demo deployment.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health")
@@ -63,6 +80,17 @@ def get_lead(lead_id: str, db: Session = Depends(get_db)):
     if not result:
         raise HTTPException(status_code=404, detail="Lead not found")
     return LeadDetailResponse(lead=result["lead"], events=result["events"])
+
+
+@app.patch("/leads/{lead_id}", response_model=LeadOut)
+def update_lead(lead_id: str, payload: LeadUpdateRequest, db: Session = Depends(get_db)):
+    """Live-lead-queue manual actions: assign/reassign, disqualify (status), edit notes."""
+    lead = repositories.update_lead_fields(db, lead_id, payload.model_dump())
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    db.commit()
+    db.refresh(lead)
+    return lead
 
 
 # ---------------------------------------------------------------------------
@@ -210,3 +238,101 @@ def update_escalation(ticket_id: int, payload: EscalationUpdateRequest, db: Sess
     db.commit()
     db.refresh(ticket)
     return ticket
+
+
+# ---------------------------------------------------------------------------
+# Dashboard reads (Phase 5): ERP inventory, salesperson board, quality/ops,
+# executive funnel
+# ---------------------------------------------------------------------------
+
+
+def _project_to_out(project, units) -> ProjectOut:
+    return ProjectOut(
+        project_id=project.project_id,
+        project_name=project.project_name,
+        locality=project.locality,
+        city=project.city,
+        construction_status=project.construction_status,
+        rera_number=project.rera_number,
+        possession=project.possession,
+        total_floors=project.total_floors,
+        amenity_count=project.amenity_count,
+        view=project.view,
+        parking_included=project.parking_included,
+        approved_for_ai=project.approved_for_ai,
+        record_status=project.record_status,
+        units=[ProjectUnitOut.model_validate(u, from_attributes=True) for u in units],
+    )
+
+
+@app.get("/projects", response_model=list[ProjectOut])
+def get_projects(db: Session = Depends(get_db)):
+    projects = repositories.list_projects(db)
+    units_by_project = repositories.list_units_by_project(db)
+    return [_project_to_out(p, units_by_project.get(p.project_id, [])) for p in projects]
+
+
+@app.get("/projects/{project_id}", response_model=ProjectOut)
+def get_project(project_id: str, db: Session = Depends(get_db)):
+    result = repositories.get_project_with_units(db, project_id)
+    if not result:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return _project_to_out(result["project"], result["units"])
+
+
+@app.get("/salespeople", response_model=list[SalespersonOut])
+def get_salespeople(db: Session = Depends(get_db)):
+    salespeople = repositories.list_salespeople(db)
+    workload = repositories.get_all_workload(db)
+    out = []
+    for sp in salespeople:
+        out.append(
+            SalespersonOut(
+                salesperson_id=sp.salesperson_id,
+                name=sp.name,
+                languages=list(sp.languages or []),
+                territory=sp.territory,
+                phone=sp.phone,
+                email=sp.email,
+                active=sp.active,
+                role=sp.role,
+                projects=repositories.get_projects_for_salesperson(db, sp.salesperson_id),
+                active_lead_count=workload.get(sp.salesperson_id, 0),
+            )
+        )
+    return out
+
+
+@app.get("/quality-reviews", response_model=list[QualityReviewOut])
+def get_quality_reviews(db: Session = Depends(get_db)):
+    rows = repositories.list_quality_reviews(db)
+    result = []
+    for r in rows:
+        review, call = r["review"], r["call"]
+        result.append(
+            QualityReviewOut(
+                review_id=review.review_id,
+                disclosure_pass=review.disclosure_pass,
+                language_pass=review.language_pass,
+                qualification_pass=review.qualification_pass,
+                accuracy_pass=review.accuracy_pass,
+                conversation_pass=review.conversation_pass,
+                escalation_pass=review.escalation_pass,
+                crm_pass=review.crm_pass,
+                booking_pass=review.booking_pass,
+                compliance_pass=review.compliance_pass,
+                hallucination_flag=review.hallucination_flag,
+                reviewer=review.reviewer,
+                notes=review.notes,
+                created_at=review.created_at,
+                call=CallTranscriptOut.model_validate(call, from_attributes=True),
+            )
+        )
+    return result
+
+
+@app.get("/metrics/funnel")
+def get_funnel_metrics(db: Session = Depends(get_db)):
+    """Spec section 3, 'Executive funnel' — stage counts across all leads."""
+    statuses = repositories.get_all_lead_statuses(db)
+    return compute_funnel(statuses)

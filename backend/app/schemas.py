@@ -180,3 +180,95 @@ class EscalationUpdateRequest(BaseModel):
     priority: Optional[str] = None
     status: Optional[str] = None
     resolution: Optional[str] = None
+
+
+class ProjectUnitOut(BaseModel):
+    unit_id: int
+    bhk: str
+    carpet_sqft: int
+    base_price_inr: int
+    image_url: Optional[str]
+    approved_for_ai: bool
+    record_status: str
+    stale_note: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
+class ProjectOut(BaseModel):
+    project_id: str
+    project_name: str
+    locality: str
+    city: str
+    construction_status: str
+    rera_number: str
+    possession: str
+    total_floors: int
+    amenity_count: int
+    view: str
+    parking_included: bool
+    approved_for_ai: bool
+    record_status: str
+    units: list[ProjectUnitOut] = []
+
+    class Config:
+        from_attributes = True
+
+
+class SalespersonOut(BaseModel):
+    salesperson_id: str
+    name: str
+    languages: list[str]
+    territory: str
+    phone: str
+    email: str
+    active: bool
+    role: str
+    projects: list[str] = []
+    active_lead_count: int = 0
+
+    class Config:
+        from_attributes = True
+
+
+class CallTranscriptOut(BaseModel):
+    call_id: int
+    lead_id: str
+    salesperson_id: Optional[str]
+    channel: str
+    language: Optional[str]
+    transcript: Optional[str]
+    disposition: Optional[str]
+    started_at: Optional[datetime]
+    ended_at: Optional[datetime]
+
+    class Config:
+        from_attributes = True
+
+
+class QualityReviewOut(BaseModel):
+    review_id: int
+    disclosure_pass: bool
+    language_pass: bool
+    qualification_pass: bool
+    accuracy_pass: bool
+    conversation_pass: bool
+    escalation_pass: bool
+    crm_pass: bool
+    booking_pass: bool
+    compliance_pass: bool
+    hallucination_flag: bool
+    reviewer: str
+    notes: Optional[str]
+    created_at: datetime
+    call: CallTranscriptOut
+
+    class Config:
+        from_attributes = True
+
+
+class LeadUpdateRequest(BaseModel):
+    assigned_salesperson_id: Optional[str] = None
+    status: Optional[str] = None
+    last_intent: Optional[str] = None

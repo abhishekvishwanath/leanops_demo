@@ -57,17 +57,22 @@ actually provided.
 2. Backend pipeline engine: capture → dedupe → qualify → match → assign (mocked AI/contact) (done)
 3. Scheduling (slots/booking/freshness) + follow-up sequencing (done)
 4. Escalation classification (E0–E5) + dashboard escalation centre (done)
-5. Dealer dashboard (Next.js) wired to backend
+5. Dealer dashboard (Next.js) wired to backend (done)
 6. Real integrations: WhatsApp Business API, voice/telephony, Google Calendar
 7. Deployment
 
 Backend so far lives entirely in `backend/app/`: `services/` holds pure,
 DB-free business logic (phone, dedupe, qualify, matching, assignment,
-contact, scheduling, followup, escalation, faq), `repositories.py` is the
-only module that touches SQLAlchemy, `pipeline.py`/`booking.py`/
+contact, scheduling, followup, escalation, faq, metrics), `repositories.py`
+is the only module that touches SQLAlchemy, `pipeline.py`/`booking.py`/
 `followups.py`/`escalation_service.py` orchestrate. Escalation classification
 is a keyword-based mock (E0 = FAQ match first, E1-E5 = risk keywords,
 unclassified defaults to E1 rather than being dropped) — see the "Known
 limitation" note in `escalation_service.py` about FAQ-match-first ordering
 before changing it. See `backend/README.md` for the endpoint list and how
 each phase was verified.
+
+Frontend lives in `frontend/` — Next.js 16 (App Router), client-rendered
+pages, Tailwind. One page per spec-section-3 dashboard area, all calling the
+backend directly (CORS open for local dev). See `frontend/README.md` for the
+route/endpoint map and the Next 16 `params`-is-now-a-Promise gotcha.

@@ -6,21 +6,29 @@ from sqlalchemy.orm import Session
 from app import followups, repositories
 from app.booking import cancel_slot, confirm_slot, hold_slot
 from app.db import get_db
+from app.escalation_service import handle_question
 from app.pipeline import run_capture_pipeline
 from app.schemas import (
+    ClassifyRequest,
+    ClassifyResponse,
     ContactOutcomeRequest,
     DueFollowupOut,
+    EscalationTicketOut,
+    EscalationUpdateRequest,
     FollowupSendRequest,
     LeadCaptureRequest,
     LeadDetailResponse,
     LeadOut,
     LeadPipelineResponse,
+    QuestionRequest,
+    QuestionResponse,
     ReplyRequest,
     SlotActionRequest,
     SlotActionResponse,
     SlotCancelRequest,
     SlotOut,
 )
+from app.services.escalation import classify_risk
 
 app = FastAPI(title="XYZ Properties Lead Conversion Demo API")
 
@@ -138,3 +146,67 @@ def reply(lead_id: str, payload: ReplyRequest, db: Session = Depends(get_db)):
     if not followups.record_reply(db, lead_id, payload.message):
         raise HTTPException(status_code=404, detail="lead_not_found")
     return SlotActionResponse(ok=True, reason="reply_recorded")
+
+
+# ---------------------------------------------------------------------------
+# Escalation classification (spec section 5, E0-E5)
+# ---------------------------------------------------------------------------
+
+
+@app.post("/classify", response_model=ClassifyResponse)
+def classify(payload: ClassifyRequest):
+    """
+    Stateless risk classification only (no FAQ lookup, no DB writes) — useful
+    for testing/tuning the keyword rules against a message directly.
+    """
+    result = classify_risk(payload.message)
+    if not result:
+        return ClassifyResponse(escalation_class="E0", confidence=0.0, source="no_risk_keywords_matched")
+    return ClassifyResponse(
+        escalation_class=result.escalation_class,
+        confidence=result.confidence,
+        source=result.source,
+        matched_keywords=result.matched_keywords,
+    )
+
+
+@app.post("/leads/{lead_id}/questions", response_model=QuestionResponse)
+def ask_question(lead_id: str, payload: QuestionRequest, db: Session = Depends(get_db)):
+    """
+    Stage 7 ("Escalate") of the pipeline: tries an approved FAQ answer first
+    (E0), otherwise classifies the risk level and opens an escalation ticket
+    (E1-E5) rather than letting the AI answer substantively.
+    """
+    result = handle_question(db, lead_id, payload.message)
+    if result is None:
+        raise HTTPException(status_code=404, detail="lead_not_found")
+    return QuestionResponse(**result)
+
+
+@app.get("/escalations", response_model=list[EscalationTicketOut])
+def get_escalations(
+    status: Optional[str] = None,
+    escalation_class: Optional[str] = None,
+    owner: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    return repositories.list_escalations(db, status=status, escalation_class=escalation_class, owner=owner)
+
+
+@app.get("/escalations/{ticket_id}", response_model=EscalationTicketOut)
+def get_escalation(ticket_id: int, db: Session = Depends(get_db)):
+    ticket = repositories.get_escalation(db, ticket_id)
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Escalation ticket not found")
+    return ticket
+
+
+@app.patch("/escalations/{ticket_id}", response_model=EscalationTicketOut)
+def update_escalation(ticket_id: int, payload: EscalationUpdateRequest, db: Session = Depends(get_db)):
+    """Dashboard escalation-centre actions: assign expert, set priority, resolve, reopen."""
+    ticket = repositories.update_escalation(db, ticket_id, payload.model_dump())
+    if not ticket:
+        raise HTTPException(status_code=404, detail="Escalation ticket not found")
+    db.commit()
+    db.refresh(ticket)
+    return ticket

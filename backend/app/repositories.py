@@ -9,9 +9,11 @@ from typing import Dict, List, Optional
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
-from app.domain import LeadCandidate, ProjectUnit, SalespersonRecord, SlotRecord
+from app.domain import FaqRecord, LeadCandidate, ProjectUnit, SalespersonRecord, SlotRecord
 from app.models import (
     AppointmentSlot,
+    EscalationTicket,
+    Faq,
     Lead,
     LeadEvent,
     Project,
@@ -310,3 +312,77 @@ def list_leads_for_followup_scan(db: Session) -> List[Lead]:
 
     stmt = select(Lead).where(Lead.status.notin_(STOP_STATUSES))
     return db.scalars(stmt).all()
+
+
+# ---------------------------------------------------------------------------
+# Escalation classification (Phase 4)
+# ---------------------------------------------------------------------------
+
+
+def get_active_faqs(db: Session) -> List[FaqRecord]:
+    rows = db.scalars(
+        select(Faq).where(Faq.approved_for_ai.is_(True), Faq.record_status == "active")
+    ).all()
+    return [
+        FaqRecord(faq_id=r.faq_id, category=r.category, question=r.question, approved_answer=r.approved_answer)
+        for r in rows
+    ]
+
+
+def create_escalation_ticket(
+    db: Session,
+    *,
+    lead_id: str,
+    escalation_class: str,
+    reason: str,
+    expert_type: Optional[str],
+    owner: Optional[str],
+    priority: Optional[str],
+    sla_due_at,
+    created_at,
+) -> int:
+    ticket = EscalationTicket(
+        tenant_id=TENANT_ID,
+        lead_id=lead_id,
+        escalation_class=escalation_class,
+        reason=reason,
+        expert_type=expert_type,
+        owner=owner,
+        priority=priority,
+        sla_due_at=sla_due_at,
+        status="Open",
+        created_at=created_at,
+    )
+    db.add(ticket)
+    db.flush()
+    return ticket.ticket_id
+
+
+def list_escalations(
+    db: Session,
+    status: Optional[str] = None,
+    escalation_class: Optional[str] = None,
+    owner: Optional[str] = None,
+) -> List[EscalationTicket]:
+    stmt = select(EscalationTicket)
+    if status:
+        stmt = stmt.where(EscalationTicket.status == status)
+    if escalation_class:
+        stmt = stmt.where(EscalationTicket.escalation_class == escalation_class)
+    if owner:
+        stmt = stmt.where(EscalationTicket.owner == owner)
+    return db.scalars(stmt.order_by(EscalationTicket.created_at.desc())).all()
+
+
+def get_escalation(db: Session, ticket_id: int) -> Optional[EscalationTicket]:
+    return db.get(EscalationTicket, ticket_id)
+
+
+def update_escalation(db: Session, ticket_id: int, fields: dict) -> Optional[EscalationTicket]:
+    ticket = db.get(EscalationTicket, ticket_id)
+    if not ticket:
+        return None
+    for key, value in fields.items():
+        if value is not None:
+            setattr(ticket, key, value)
+    return ticket

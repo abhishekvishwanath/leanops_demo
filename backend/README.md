@@ -1,10 +1,12 @@
 # Backend — lead pipeline API
 
-FastAPI service implementing WF001-WF010 (capture, dedupe, qualify, match,
-assign, schedule, follow up) against the schema in
-`db/migrations/0001_init.sql`. Contact (WF004/WF005) and follow-up delivery
-are mocked until WhatsApp/telephony credentials are wired up in a later
-phase — see `app/services/contact.py`.
+FastAPI service implementing WF001-WF010 plus escalation classification
+(capture, dedupe, qualify, match, assign, schedule, follow up, escalate)
+against the schema in `db/migrations/0001_init.sql`. Contact (WF004/WF005)
+and follow-up delivery are mocked until WhatsApp/telephony credentials are
+wired up in a later phase — see `app/services/contact.py`. Escalation
+classification (spec section 5) is a keyword-based mock standing in for a
+real LLM classifier — see `app/services/escalation.py`.
 
 ## Setup
 
@@ -38,6 +40,13 @@ uvicorn app.main:app --reload
 - `POST /leads/{lead_id}/opt-out` — stops the sequence
 - `POST /leads/{lead_id}/reply` — stops the sequence
 
+**Escalation classification (Phase 4, WF stage 7, spec section 5)**
+- `POST /classify` `{message}` — stateless risk classification only, no DB writes (for tuning the keyword rules)
+- `POST /leads/{lead_id}/questions` `{message}` — FAQ match first (E0, answers directly), else risk-classifies into E1-E5 and opens a ticket; E5 also pauses the lead's automation
+- `GET /escalations` — list tickets (`?status=`, `?escalation_class=`, `?owner=`)
+- `GET /escalations/{ticket_id}` — ticket detail
+- `PATCH /escalations/{ticket_id}` `{owner?, priority?, status?, resolution?}` — dashboard escalation-centre actions
+
 - `GET /health`
 
 ## Test
@@ -46,7 +55,7 @@ uvicorn app.main:app --reload
 pytest
 ```
 
-All 50 tests are pure unit tests against `app/services/*` and `app/domain.py`
+All 65 tests are pure unit tests against `app/services/*` and `app/domain.py`
 — no database required. They run against in-memory dataclasses, not the ORM.
 
 Integration/end-to-end verification (migration + seed + live API calls) was
@@ -58,6 +67,10 @@ exclusion. Phase 3 covered: hold/confirm booking, a lost-race 409 on a
 double-hold, lead-status transitions on booking and cancellation, the
 day-3/7/10 sequence (including "already sent" and "stopped by reply"),
 no-answer retry, opt-out, and a freshness-guard 409 on a past-dated slot.
+Phase 4 covered: the Phase 1 seeded E1/E2/E4 tickets read back correctly, a
+live E0 FAQ answer, a live E1/E3/E5 classification each (E5 correctly pauses
+the lead and blocks further follow-ups), an unclassified message correctly
+defaulting to E1 rather than being dropped, and a PATCH resolving a ticket.
 
 ## Architecture note
 

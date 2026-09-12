@@ -99,3 +99,28 @@ class SlotRecord:
 class SlotActionResult:
     ok: bool
     reason: str
+
+
+@dataclass
+class FaqRecord:
+    faq_id: str
+    category: str
+    question: str
+    approved_answer: str
+
+
+@dataclass
+class FaqMatch:
+    faq_id: str
+    question: str
+    answer: str
+    score: float
+
+
+@dataclass
+class ClassificationResult:
+    escalation_class: str  # "E0".."E5"
+    confidence: float
+    source: str  # "faq_match" | "risk_keywords" | "unclassified_default"
+    matched_keywords: list = field(default_factory=list)
+    faq: Optional[FaqMatch] = None

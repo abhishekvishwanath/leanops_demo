@@ -133,3 +133,50 @@ class ReplyRequest(BaseModel):
 class LeadDetailResponse(BaseModel):
     lead: LeadOut
     events: list[LeadEventOut]
+
+
+class QuestionRequest(BaseModel):
+    message: str
+
+
+class QuestionResponse(BaseModel):
+    escalation_class: str
+    confidence: float
+    source: str
+    ai_answer: Optional[str] = None
+    escalation_ticket_id: Optional[int] = None
+
+
+class ClassifyRequest(BaseModel):
+    message: str
+
+
+class ClassifyResponse(BaseModel):
+    escalation_class: str
+    confidence: float
+    source: str
+    matched_keywords: list[str] = []
+
+
+class EscalationTicketOut(BaseModel):
+    ticket_id: int
+    lead_id: str
+    escalation_class: str
+    reason: str
+    expert_type: Optional[str]
+    owner: Optional[str]
+    priority: Optional[str]
+    sla_due_at: Optional[datetime]
+    status: str
+    resolution: Optional[str]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class EscalationUpdateRequest(BaseModel):
+    owner: Optional[str] = None
+    priority: Optional[str] = None
+    status: Optional[str] = None
+    resolution: Optional[str] = None

@@ -15,12 +15,14 @@ FOLLOWUP_DAYS = [3, 7, 10]
 
 # Any of these lead statuses means the sequence has already ended for a real
 # reason (booked, merged into another record, dead, opted out, parked in a
-# review queue) — spec: "stop on reply, opt-out, appointment or dead status".
+# review queue, handed to a human) — spec: "stop on reply, opt-out,
+# appointment, human takeover or dead status."
 STOP_STATUSES = {
     "Appointment Booked",
     "Merged - Duplicate",
     "Merged - Broker Claim Under Review",
     "Review Queue",
+    "Escalated - Human Takeover",
     "Dead",
     "Opted Out",
 }

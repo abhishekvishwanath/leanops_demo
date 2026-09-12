@@ -1,0 +1,4 @@
+tenant_id,lead_id,escalation_class,reason,expert_type,owner,priority,sla_due_at,status,resolution,created_at
+00000000-0000-0000-0000-000000000001,LD0003,E1,Requested a discount and asked to reserve the unit pending price approval.,Salesperson,SP001,Medium,2026-09-12T10:34:00Z,In Progress,,2026-09-12T10:19:30Z
+00000000-0000-0000-0000-000000000001,LD0010,E2,Asked for the current price of PRJ008 1BHK; the ERP record is marked stale and not approved for AI.,Inventory Manager,SP002,High,2026-09-12T11:08:00Z,Open,,2026-09-12T10:58:30Z
+00000000-0000-0000-0000-000000000001,LD0004,E4,Asked whether the developer pays compensation if possession is delayed beyond the RERA-committed date.,Legal/Compliance,,High,2026-09-13T18:00:00Z,Open,,2026-09-12T11:15:00Z

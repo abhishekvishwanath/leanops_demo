@@ -1,0 +1,11 @@
+project_id,tenant_id,project_name,locality,city,construction_status,rera_number,possession,total_floors,amenity_count,view,parking_included,last_updated_at,updated_by,version,approved_for_ai,record_status
+PRJ001,00000000-0000-0000-0000-000000000001,Harbour Heights,Mulund West,Mumbai,Under Construction,MahaRERA-P51800081234,Dec-2028,12,850,East,True,2026-09-12T00:00:00Z,seed_script,1,True,active
+PRJ002,00000000-0000-0000-0000-000000000001,Lakeside Crest,Powai,Mumbai,Ready to Move,MahaRERA-P51800084567,Ready,18,1050,North-East,True,2026-09-12T00:00:00Z,seed_script,1,True,active
+PRJ003,00000000-0000-0000-0000-000000000001,Metroview Enclave,Ghatkopar East,Mumbai,Under Construction,MahaRERA-P51800087890,Jun-2029,9,720,West,True,2026-09-12T00:00:00Z,seed_script,1,True,active
+PRJ004,00000000-0000-0000-0000-000000000001,Orchid Avenue,Kandivali West,Mumbai,Under Construction,MahaRERA-P51800090123,Mar-2028,15,640,South,False,2026-09-12T00:00:00Z,seed_script,1,True,active
+PRJ005,00000000-0000-0000-0000-000000000001,Greenline Residences,Malad East,Mumbai,Ready to Move,MahaRERA-P51800093456,Ready,16,780,East,True,2026-09-12T00:00:00Z,seed_script,1,True,active
+PRJ006,00000000-0000-0000-0000-000000000001,Bayline Gardens,Vashi,Navi Mumbai,Under Construction,MahaRERA-P52000076543,Sep-2028,8,520,North,True,2026-09-12T00:00:00Z,seed_script,1,True,active
+PRJ007,00000000-0000-0000-0000-000000000001,Palm Court,Thane West,Thane,Under Construction,MahaRERA-P51700081290,Nov-2029,11,900,West,True,2026-09-12T00:00:00Z,seed_script,1,True,active
+PRJ008,00000000-0000-0000-0000-000000000001,Skyline 45,Borivali East,Mumbai,Under Construction,MahaRERA-P51800095678,Jan-2029,14,690,South-West,True,2026-09-12T00:00:00Z,seed_script,1,True,active
+PRJ009,00000000-0000-0000-0000-000000000001,Cedar Park,Kharghar,Navi Mumbai,Ready to Move,MahaRERA-P52000078901,Ready,10,410,East,True,2026-09-12T00:00:00Z,seed_script,1,True,active
+PRJ010,00000000-0000-0000-0000-000000000001,Urban Nest,Bhandup West,Mumbai,Under Construction,MahaRERA-P51800097890,Aug-2028,7,560,North,True,2026-09-12T00:00:00Z,seed_script,1,True,active

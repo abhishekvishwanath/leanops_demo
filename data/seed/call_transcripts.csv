@@ -1,0 +1,13 @@
+lead_id,salesperson_id,channel,language,transcript,recording_metadata,disposition,started_at,ended_at
+LD0001,SP001,voice,English,"AI: Hi, this is XYZ Properties' AI assistant calling about your enquiry for Metroview Enclave — I'm an AI, happy to hand you to a human anytime. Is English okay to continue in?
+Lead: Yes, English is fine.
+AI: Great — are you looking at a 1BHK or 2BHK, and what's your target budget?
+Lead: 2BHK, up to 1.4 crore.
+AI: The 2BHK at Metroview Enclave is priced at 1.29 crore for 665 sq ft carpet, west-facing, with parking included. Would you like to schedule a site visit?
+Lead: Yes, please.
+AI: I'll pass you to Amit, who owns this project, to confirm a slot.","{""duration_sec"": 96, ""recording_id"": ""REC-LD0001-01""}",Qualified - Site visit requested,2026-09-12T10:06:00Z,2026-09-12T10:07:36Z
+LD0005,SP003,voice,English,"AI: Hi, this is XYZ Properties' AI assistant about Bayline Gardens — I'm an AI, happy to connect you to a human. Is this a good time?
+Lead: Sure, I'm looking at it as an investment.
+AI: Understood. Based on similar projects in Vashi, you could expect roughly 8% annual rental yield.
+Lead: That sounds promising, can you send details?
+AI: I'll send the approved project card over WhatsApp.","{""duration_sec"": 71, ""recording_id"": ""REC-LD0005-01""}",Nurture - investment enquiry,2026-09-12T10:36:00Z,2026-09-12T10:37:11Z

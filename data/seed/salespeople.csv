@@ -1,0 +1,5 @@
+salesperson_id,tenant_id,name,languages,territory,phone,email,active,role
+SP001,00000000-0000-0000-0000-000000000001,Amit Verma,"['English', 'Hindi']",Central Mumbai,+919820000101,amit.verma@xyzproperties.demo,True,project_owner
+SP002,00000000-0000-0000-0000-000000000001,Neha Kulkarni,"['English', 'Marathi', 'Hindi']",Western Suburbs,+919820000102,neha.kulkarni@xyzproperties.demo,True,project_owner
+SP003,00000000-0000-0000-0000-000000000001,Sahil Khan,"['English', 'Hindi', 'Marathi']",Navi Mumbai and Thane,+919820000103,sahil.khan@xyzproperties.demo,True,project_owner
+SP004,00000000-0000-0000-0000-000000000001,Divya Rao,"['English', 'Hindi', 'Marathi', 'Kannada', 'Telugu']",Cross-territory language specialist,+919820000104,divya.rao@xyzproperties.demo,True,floating_specialist

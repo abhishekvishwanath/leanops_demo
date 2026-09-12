@@ -1,0 +1,11 @@
+media_id,project_id,type,language,url,version,approval_status,valid_from,valid_until,checksum
+MEDIA-PRJ001-CARD-EN,PRJ001,project_card,English,https://images.unsplash.com/photo-1600607687939-ce8a6c25118c,1,approved,2026-09-12T00:00:00Z,,
+MEDIA-PRJ002-CARD-EN,PRJ002,project_card,English,https://images.unsplash.com/photo-1600607687920-4e2a09cf159d,1,approved,2026-09-12T00:00:00Z,,
+MEDIA-PRJ003-CARD-EN,PRJ003,project_card,English,https://images.unsplash.com/photo-1600585154340-be6161a56a0c,1,approved,2026-09-12T00:00:00Z,,
+MEDIA-PRJ004-CARD-EN,PRJ004,project_card,English,https://images.unsplash.com/photo-1600607687920-4e2a09cf159d,1,approved,2026-09-12T00:00:00Z,,
+MEDIA-PRJ005-CARD-EN,PRJ005,project_card,English,https://images.unsplash.com/photo-1600607688969-a5bfcd646154,1,approved,2026-09-12T00:00:00Z,,
+MEDIA-PRJ006-CARD-EN,PRJ006,project_card,English,https://images.unsplash.com/photo-1600585154340-be6161a56a0c,1,approved,2026-09-12T00:00:00Z,,
+MEDIA-PRJ007-CARD-EN,PRJ007,project_card,English,https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea,1,approved,2026-09-12T00:00:00Z,,
+MEDIA-PRJ008-CARD-EN,PRJ008,project_card,English,https://images.unsplash.com/photo-1600585154340-be6161a56a0c,1,approved,2026-09-12T00:00:00Z,,
+MEDIA-PRJ009-CARD-EN,PRJ009,project_card,English,https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3,1,approved,2026-09-12T00:00:00Z,,
+MEDIA-PRJ010-CARD-EN,PRJ010,project_card,English,https://images.unsplash.com/photo-1600607687920-4e2a09cf159d,1,approved,2026-09-12T00:00:00Z,,

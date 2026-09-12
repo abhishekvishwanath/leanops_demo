@@ -1,0 +1,13 @@
+workflow_id,trigger_event,channel_or_role,action,output,sla_or_timing
+WF001,Lead created,Any channel,"Normalize phone, validate consent, deduplicate, create CRM record",CRM + Lead Events,Immediate
+WF002,Lead created,Any channel,"AI extracts language, locality, BHK, area, budget, timeline, intent",Lead fields + score,Within 10 sec
+WF003,Lead created,Any channel,Select matching project/unit records from ERP using hard filters,Property matches,Within 15 sec
+WF004,Lead created,Any channel,Place outbound AI call if consent and provider rules permit; otherwise send WhatsApp response,Call/WhatsApp,Within 60 sec
+WF005,Call answered,Voice agent,"Disclose AI, ask language, qualify, answer approved FAQs, offer visit",Conversation + structured data,During call
+WF006,Qualified,CRM,"Assign salesperson by project, territory, language, workload",Task + notification,Immediate
+WF007,Property match,WhatsApp,"Send approved project card, brochure, photos, video, floor plan and disclaimer",WhatsApp message log,After permission
+WF008,Visit requested,Calendar,"Offer available slots, book only after confirmation, send reminder",Appointment,Immediate
+WF009,No answer,Voice agent,Send follow-up WhatsApp and create retry task,Follow-up sequence,Immediate
+WF010,No appointment,CRM,"Follow up on days 3, 7 and 10; stop on reply, opt-out, appointment or dead status",Sequence log,Scheduled
+WF011,Human handoff,Agent,"Send summary, transcript, score, objections and recommended next action to salesperson",Sales notification,Immediate
+WF012,Daily,Dashboard,"Report new leads, response time, qualified leads, visits, no-answer rate and failures",Management report,09:00 daily

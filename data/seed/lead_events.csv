@@ -1,0 +1,14 @@
+lead_id,event_type,payload,created_at
+LD0001,lead.created,"{""source"": ""Meta Lead Ads""}",2026-09-12 10:05
+LD0002,lead.created,"{""source"": ""Website Form""}",2026-09-12 10:12
+LD0003,lead.created,"{""source"": ""WhatsApp""}",2026-09-12 10:19
+LD0004,lead.created,"{""source"": ""Incoming Call""}",2026-09-12 10:28
+LD0005,lead.created,"{""source"": ""Meta Lead Ads""}",2026-09-12 10:35
+LD0006,lead.created,"{""source"": ""Website Form""}",2026-09-12 10:41
+LD0007,lead.created,"{""source"": ""WhatsApp""}",2026-09-12 10:47
+LD0008,lead.created,"{""source"": ""Incoming Call""}",2026-09-12 10:53
+LD0009,lead.created,"{""source"": ""Meta Lead Ads""}",2026-09-12 10:56
+LD0010,lead.created,"{""source"": ""Website Form""}",2026-09-12 10:58
+LD0009,lead.routing_recommended,"{""recommended_salesperson_id"": ""SP004"", ""reason"": ""project owner SP001 does not speak Kannada""}",2026-09-12T10:56:30Z
+LD0011,duplicate.flagged,"{""match_type"": ""hard_match_phone"", ""canonical_lead_id"": ""LD0001""}",2026-09-12T11:40:05Z
+LD0001,lead.merged,"{""merged_lead_id"": ""LD0011"", ""reason"": ""broker ownership claim conflicts with existing direct-source lead"", ""claim_status"": ""Under Review""}",2026-09-12T11:40:10Z

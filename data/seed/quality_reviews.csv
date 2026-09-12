@@ -1,0 +1,3 @@
+call_ref,disclosure_pass,language_pass,qualification_pass,accuracy_pass,conversation_pass,escalation_pass,crm_pass,booking_pass,compliance_pass,hallucination_flag,reviewer,notes
+LD0001,True,True,True,True,True,True,True,True,True,False,QA Bot,Meets all rubric dimensions; site visit correctly logged.
+LD0005,True,True,True,False,True,False,True,True,True,True,QA Bot,Agent quoted an unapproved 8% rental-yield projection not present in ERP/FAQ data. Should have been treated as an E3 finance question and escalated instead of answered. Flagged for retraining and human follow-up.

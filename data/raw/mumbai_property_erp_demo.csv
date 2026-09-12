@@ -1,0 +1,21 @@
+project_id,project_name,locality,city,status,rera_number,possession,bhk,carpet_sqft,base_price_inr,total_floors,amenity_count,view,parking_included,image_url
+PRJ001,Harbour Heights,Mulund West,Mumbai,Under Construction,MahaRERA-P51800081234,Dec-2028,1BHK,480,9800000,12,850,East,Yes,https://images.unsplash.com/photo-1600607687939-ce8a6c25118c
+PRJ001,Harbour Heights,Mulund West,Mumbai,Under Construction,MahaRERA-P51800081234,Dec-2028,2BHK,690,14200000,12,850,East,Yes,https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea
+PRJ002,Lakeside Crest,Powai,Mumbai,Ready to Move,MahaRERA-P51800084567,Ready,1BHK,505,12800000,18,1050,North-East,Yes,https://images.unsplash.com/photo-1600607687920-4e2a09cf159d
+PRJ002,Lakeside Crest,Powai,Mumbai,Ready to Move,MahaRERA-P51800084567,Ready,2BHK,780,15000000,18,1050,North-East,Yes,https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3
+PRJ003,Metroview Enclave,Ghatkopar East,Mumbai,Under Construction,MahaRERA-P51800087890,Jun-2029,1BHK,460,8900000,9,720,West,Yes,https://images.unsplash.com/photo-1600585154340-be6161a56a0c
+PRJ003,Metroview Enclave,Ghatkopar East,Mumbai,Under Construction,MahaRERA-P51800087890,Jun-2029,2BHK,665,12900000,9,720,West,Yes,https://images.unsplash.com/photo-1600607688969-a5bfcd646154
+PRJ004,Orchid Avenue,Kandivali West,Mumbai,Under Construction,MahaRERA-P51800090123,Mar-2028,1BHK,475,7600000,15,640,South,No,https://images.unsplash.com/photo-1600607687920-4e2a09cf159d
+PRJ004,Orchid Avenue,Kandivali West,Mumbai,Under Construction,MahaRERA-P51800090123,Mar-2028,2BHK,710,11800000,15,640,South,Yes,https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea
+PRJ005,Greenline Residences,Malad East,Mumbai,Ready to Move,MahaRERA-P51800093456,Ready,2BHK,735,13500000,16,780,East,Yes,https://images.unsplash.com/photo-1600607688969-a5bfcd646154
+PRJ005,Greenline Residences,Malad East,Mumbai,Ready to Move,MahaRERA-P51800093456,Ready,3BHK,990,14900000,16,780,East,Yes,https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3
+PRJ006,Bayline Gardens,Vashi,Navi Mumbai,Under Construction,MahaRERA-P52000076543,Sep-2028,1BHK,520,7200000,8,520,North,Yes,https://images.unsplash.com/photo-1600585154340-be6161a56a0c
+PRJ006,Bayline Gardens,Vashi,Navi Mumbai,Under Construction,MahaRERA-P52000076543,Sep-2028,2BHK,760,11200000,8,520,North,Yes,https://images.unsplash.com/photo-1600607687939-ce8a6c25118c
+PRJ007,Palm Court,Thane West,Thane,Under Construction,MahaRERA-P51700081290,Nov-2029,2BHK,745,10800000,11,900,West,Yes,https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea
+PRJ007,Palm Court,Thane West,Thane,Under Construction,MahaRERA-P51700081290,Nov-2029,3BHK,1040,14900000,11,900,West,Yes,https://images.unsplash.com/photo-1600607687920-4e2a09cf159d
+PRJ008,Skyline 45,Borivali East,Mumbai,Under Construction,MahaRERA-P51800095678,Jan-2029,1BHK,490,8500000,14,690,South-West,Yes,https://images.unsplash.com/photo-1600585154340-be6161a56a0c
+PRJ008,Skyline 45,Borivali East,Mumbai,Under Construction,MahaRERA-P51800095678,Jan-2029,2BHK,725,12500000,14,690,South-West,Yes,https://images.unsplash.com/photo-1600607688969-a5bfcd646154
+PRJ009,Cedar Park,Kharghar,Navi Mumbai,Ready to Move,MahaRERA-P52000078901,Ready,2BHK,805,9800000,10,410,East,Yes,https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3
+PRJ009,Cedar Park,Kharghar,Navi Mumbai,Ready to Move,MahaRERA-P52000078901,Ready,3BHK,1120,14500000,10,410,East,Yes,https://images.unsplash.com/photo-1600607687939-ce8a6c25118c
+PRJ010,Urban Nest,Bhandup West,Mumbai,Under Construction,MahaRERA-P51800097890,Aug-2028,1BHK,455,7900000,7,560,North,Yes,https://images.unsplash.com/photo-1600607687920-4e2a09cf159d
+PRJ010,Urban Nest,Bhandup West,Mumbai,Under Construction,MahaRERA-P51800097890,Aug-2028,2BHK,680,12100000,7,560,North,Yes,https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea

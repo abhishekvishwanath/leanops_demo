@@ -1,0 +1,4 @@
+salesperson_id,name,languages,territory,projects,phone,email,active
+SP001,Amit Verma,"English, Hindi",Central Mumbai,"PRJ001,PRJ002,PRJ003,PRJ010",+919820000101,amit.verma@xyzproperties.demo,True
+SP002,Neha Kulkarni,"English, Marathi, Hindi",Western Suburbs,"PRJ004,PRJ005,PRJ008",+919820000102,neha.kulkarni@xyzproperties.demo,True
+SP003,Sahil Khan,"English, Hindi, Marathi",Navi Mumbai and Thane,"PRJ006,PRJ007,PRJ009",+919820000103,sahil.khan@xyzproperties.demo,True

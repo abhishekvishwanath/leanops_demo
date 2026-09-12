@@ -53,10 +53,17 @@ actually provided.
 
 ## Build phases
 0. Analysis (done)
-1. DB schema + seed data (normalize CSVs, patch gaps above)
-2. Backend pipeline engine: capture → dedupe → qualify → match → assign (mocked AI/contact)
-3. Scheduling (slots/booking/freshness) + follow-up sequencing
+1. DB schema + seed data (normalize CSVs, patch gaps above) (done)
+2. Backend pipeline engine: capture → dedupe → qualify → match → assign (mocked AI/contact) (done)
+3. Scheduling (slots/booking/freshness) + follow-up sequencing (done)
 4. Escalation classification (E0–E5) + dashboard escalation centre
 5. Dealer dashboard (Next.js) wired to backend
 6. Real integrations: WhatsApp Business API, voice/telephony, Google Calendar
 7. Deployment
+
+Backend so far lives entirely in `backend/app/`: `services/` holds pure,
+DB-free business logic (phone, dedupe, qualify, matching, assignment,
+contact, scheduling, followup), `repositories.py` is the only module that
+touches SQLAlchemy, `pipeline.py`/`booking.py`/`followups.py` orchestrate.
+See `backend/README.md` for the endpoint list and how each phase was
+verified.

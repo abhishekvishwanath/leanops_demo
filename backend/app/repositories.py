@@ -6,11 +6,12 @@ lead_id generation and the handful of write paths the pipeline needs.
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
-from app.domain import LeadCandidate, ProjectUnit, SalespersonRecord
+from app.domain import LeadCandidate, ProjectUnit, SalespersonRecord, SlotRecord
 from app.models import (
+    AppointmentSlot,
     Lead,
     LeadEvent,
     Project,
@@ -164,3 +165,148 @@ def list_leads(
     if project_id:
         stmt = stmt.where(Lead.project_interest == project_id)
     return db.scalars(stmt.order_by(Lead.created_at)).all()
+
+
+# ---------------------------------------------------------------------------
+# Scheduling (Phase 3)
+# ---------------------------------------------------------------------------
+
+
+def _slot_to_record(row: AppointmentSlot) -> SlotRecord:
+    return SlotRecord(
+        slot_id=row.slot_id,
+        project_id=row.project_id,
+        salesperson_id=row.salesperson_id,
+        slot_date=row.slot_date,
+        slot_time=row.slot_time,
+        status=row.status,
+        lead_id=row.lead_id,
+        approved_for_ai=row.approved_for_ai,
+    )
+
+
+def get_slot(db: Session, slot_id: str) -> Optional[SlotRecord]:
+    row = db.get(AppointmentSlot, slot_id)
+    return _slot_to_record(row) if row else None
+
+
+def list_slots(
+    db: Session,
+    project_id: Optional[str] = None,
+    status: Optional[str] = None,
+    slot_date: Optional[str] = None,
+) -> List[SlotRecord]:
+    stmt = select(AppointmentSlot)
+    if project_id:
+        stmt = stmt.where(AppointmentSlot.project_id == project_id)
+    if status:
+        stmt = stmt.where(AppointmentSlot.status == status)
+    if slot_date:
+        stmt = stmt.where(AppointmentSlot.slot_date == slot_date)
+    rows = db.scalars(stmt.order_by(AppointmentSlot.slot_date, AppointmentSlot.slot_time)).all()
+    return [_slot_to_record(r) for r in rows]
+
+
+def cas_slot_status(
+    db: Session,
+    slot_id: str,
+    *,
+    expected_status: str,
+    expected_lead_id: Optional[str],
+    new_status: str,
+    lead_id: Optional[str],
+) -> bool:
+    """
+    Atomic compare-and-swap on a slot's status, so two concurrent requests
+    can never both win the same slot (spec: "recheck availability before
+    booking"). Returns True iff this call's WHERE clause actually matched a
+    row — i.e. this caller won the race.
+    """
+    params = {
+        "slot_id": slot_id,
+        "expected_status": expected_status,
+        "new_status": new_status,
+        "lead_id": lead_id,
+    }
+    where_lead_clause = ""
+    if expected_lead_id is not None:
+        where_lead_clause = "and lead_id = :expected_lead_id"
+        params["expected_lead_id"] = expected_lead_id
+
+    result = db.execute(
+        text(
+            f"""
+            update appointment_slots
+            set status = :new_status,
+                lead_id = :lead_id,
+                version = version + 1,
+                last_updated_at = now()
+            where slot_id = :slot_id
+              and status = :expected_status
+              {where_lead_clause}
+            """
+        ),
+        params,
+    )
+    return result.rowcount == 1
+
+
+def cancel_slot_row(db: Session, slot_id: str) -> bool:
+    result = db.execute(
+        text(
+            """
+            update appointment_slots
+            set status = 'Cancelled', version = version + 1, last_updated_at = now()
+            where slot_id = :slot_id
+              and status not in ('Cancelled', 'Completed')
+            """
+        ),
+        {"slot_id": slot_id},
+    )
+    return result.rowcount == 1
+
+
+def update_lead_status(db: Session, lead_id: str, status: str) -> None:
+    db.execute(
+        text("update leads set status = :status where lead_id = :lead_id"),
+        {"status": status, "lead_id": lead_id},
+    )
+
+
+# ---------------------------------------------------------------------------
+# Follow-up sequencing (Phase 3)
+# ---------------------------------------------------------------------------
+
+
+def get_lead(db: Session, lead_id: str) -> Optional[Lead]:
+    return db.get(Lead, lead_id)
+
+
+def get_sent_followup_days(db: Session, lead_id: str) -> set:
+    rows = db.scalars(
+        select(LeadEvent.payload).where(
+            LeadEvent.lead_id == lead_id, LeadEvent.event_type == "followup.sent"
+        )
+    ).all()
+    return {r["day"] for r in rows if r and "day" in r}
+
+
+def has_replied(db: Session, lead_id: str) -> bool:
+    return (
+        db.scalar(
+            select(func.count(LeadEvent.event_id)).where(
+                LeadEvent.lead_id == lead_id, LeadEvent.event_type == "lead.replied"
+            )
+        )
+        > 0
+    )
+
+
+def list_leads_for_followup_scan(db: Session) -> List[Lead]:
+    """All leads that are still real pipeline participants (excludes
+    already-merged duplicates/review-queue rows, which never enter the
+    funnel to begin with)."""
+    from app.services.followup import STOP_STATUSES
+
+    stmt = select(Lead).where(Lead.status.notin_(STOP_STATUSES))
+    return db.scalars(stmt).all()

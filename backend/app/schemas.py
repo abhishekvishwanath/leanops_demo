@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime, time
 from typing import Any, Optional
 
 from pydantic import BaseModel
@@ -86,6 +86,48 @@ class LeadEventOut(BaseModel):
     event_type: str
     payload: Any
     created_at: datetime
+
+
+class SlotOut(BaseModel):
+    slot_id: str
+    project_id: str
+    salesperson_id: str
+    slot_date: date
+    slot_time: time
+    status: str
+    lead_id: Optional[str]
+
+
+class SlotActionRequest(BaseModel):
+    lead_id: str
+
+
+class SlotCancelRequest(BaseModel):
+    reason: str = "Not specified"
+
+
+class SlotActionResponse(BaseModel):
+    ok: bool
+    reason: str
+
+
+class FollowupSendRequest(BaseModel):
+    day: int
+
+
+class DueFollowupOut(BaseModel):
+    lead_id: str
+    day: int
+    days_since_created: int
+
+
+class ContactOutcomeRequest(BaseModel):
+    outcome: str  # "answered" | "no_answer"
+    channel: str = "voice"
+
+
+class ReplyRequest(BaseModel):
+    message: str
 
 
 class LeadDetailResponse(BaseModel):

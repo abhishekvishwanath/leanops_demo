@@ -81,3 +81,21 @@ class AssignmentResult:
     salesperson_id: Optional[str]
     reason: str
     language_gap: bool = False
+
+
+@dataclass
+class SlotRecord:
+    slot_id: str
+    project_id: str
+    salesperson_id: str
+    slot_date: object  # datetime.date
+    slot_time: object  # datetime.time
+    status: str
+    lead_id: Optional[str]
+    approved_for_ai: bool
+
+
+@dataclass
+class SlotActionResult:
+    ok: bool
+    reason: str

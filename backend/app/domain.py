@@ -124,3 +124,15 @@ class ClassificationResult:
     source: str  # "faq_match" | "risk_keywords" | "unclassified_default"
     matched_keywords: list = field(default_factory=list)
     faq: Optional[FaqMatch] = None
+
+
+@dataclass
+class WhatsAppMessage:
+    """A fully-composed WhatsApp message, ready to send. Building this is
+    real production logic (spec section 7/8 templates); only the actual
+    network call that dispatches it is mocked (see app/whatsapp_service.py)."""
+    to_phone: str
+    template_name: str
+    language: str
+    body: str
+    media_urls: list = field(default_factory=list)

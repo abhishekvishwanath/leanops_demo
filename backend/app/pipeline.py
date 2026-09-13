@@ -12,10 +12,10 @@ from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
-from app import repositories
+from app import repositories, whatsapp_service
 from app.domain import AssignmentResult
 from app.schemas import AssignmentOut, LeadCaptureRequest, LeadPipelineResponse, MatchOut
-from app.services import assignment, contact, dedupe, matching, qualify
+from app.services import assignment, contact, dedupe, matching, qualify, whatsapp_templates
 from app.services.phone import normalize_phone
 
 
@@ -161,6 +161,15 @@ def _run_full_pipeline(db, lead_id, payload, normalized_phone, now) -> LeadPipel
     contact_result = contact.mock_contact(consent=payload.consent, language=qualified.language)
     status = "Assigned" if assignment_result.salesperson_id else "New"
 
+    if payload.consent:
+        whatsapp_service.send(
+            db,
+            whatsapp_templates.initial_acknowledgement(
+                to_phone=normalized_phone, name=payload.name, language=qualified.language or "English"
+            ),
+            lead_id=lead_id,
+        )
+
     repositories.insert_lead(
         db,
         dict(
@@ -199,6 +208,19 @@ def _run_full_pipeline(db, lead_id, payload, normalized_phone, now) -> LeadPipel
             db, lead_id, "property.matched", {"matches": [m.project_id for m in matches]}
         )
         events_created.append("property.matched")
+        if payload.consent:
+            top = matches[0]
+            media_urls = repositories.get_media_urls_for_project(db, top.project_id)
+            whatsapp_service.send(
+                db,
+                whatsapp_templates.property_match(
+                    to_phone=normalized_phone, name=payload.name, project_name=top.project_name,
+                    bhk=top.bhk, base_price_inr=top.base_price_inr, media_urls=media_urls,
+                    language=qualified.language or "English",
+                ),
+                lead_id=lead_id,
+            )
+            events_created.append("whatsapp.sent (property_match)")
     if assignment_result.salesperson_id:
         repositories.insert_event(
             db, lead_id, "lead.assigned",

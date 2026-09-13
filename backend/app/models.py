@@ -1,7 +1,8 @@
 """
-SQLAlchemy models mirroring db/migrations/0001_init.sql. Column-for-column —
-this file has no independent authority over the schema; the SQL migration is
-the source of truth (see CLAUDE.md).
+SQLAlchemy models mirroring db/migrations/0001_init.sql and
+0002_whatsapp_messages.sql. Column-for-column — this file has no independent
+authority over the schema; the SQL migrations are the source of truth (see
+CLAUDE.md).
 """
 from sqlalchemy import (
     ARRAY,
@@ -236,3 +237,22 @@ class WorkflowRule(Base):
     action = Column(Text, nullable=False)
     output = Column(String, nullable=False)
     sla_or_timing = Column(String, nullable=False)
+
+
+class WhatsAppMessageRow(Base):
+    __tablename__ = "whatsapp_messages"
+
+    message_id = Column(String, primary_key=True)
+    tenant_id = Column(String, nullable=False)
+    lead_id = Column(String, ForeignKey("leads.lead_id"))
+    salesperson_id = Column(String, ForeignKey("salespeople.salesperson_id"))
+    to_phone = Column(String, nullable=False)
+    direction = Column(String, nullable=False, default="outbound")
+    template_name = Column(String, nullable=False)
+    language = Column(String, nullable=False)
+    body = Column(Text, nullable=False)
+    media_urls = Column(ARRAY(String), nullable=False, default=list)
+    status = Column(String, nullable=False, default="queued")
+    provider = Column(String, nullable=False, default="mock")
+    provider_message_id = Column(String)
+    created_at = Column(DateTime(timezone=True), nullable=False)

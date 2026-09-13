@@ -13,13 +13,36 @@ for the full source spec (originally `mumbai_real_estate_ai_demo_system.pdf`).
   state machine driven by `data/raw/mumbai_lead_automation_workflow_demo.csv`
 - Database: Postgres (Supabase), tenant_id + row-level security
 - Jobs: Redis/Celery for follow-up scheduling (day 3/7/10 sequences)
-- Integrations (stubbed until credentials are provided, then wired in their own
-  phase): WhatsApp Business API, telephony/voice provider, Google Calendar
+- No n8n: FastAPI endpoints are the webhook receivers directly (`POST /leads`
+  plays the role a Meta/website/WhatsApp webhook hitting n8n would have
+  played). Every trigger writes an immutable `lead_events` row in the same
+  transaction as the state change — that's the audit trail, not the
+  `workflow_rules` table, which is just a static reference copy of the CSV.
+- No Google Calendar, ever (user decision): `appointment_slots` *is* the
+  calendar of record. Confirming a booking notifies the salesperson over
+  WhatsApp instead of a calendar invite — see `app/whatsapp_service.py`.
+- WhatsApp: fully production-shaped (composition, logging, all trigger
+  points) with only the final network call mocked, pending Twilio/Meta
+  credentials — see "Integrations" below.
+- Voice/telephony: Retell AI, not yet built (Retell account/agent setup
+  needs to happen first; see chat history for the full setup walkthrough).
 - Storage: Supabase Storage / S3 for media package assets
 - Monitoring: Sentry + structured event logs
 
-Live credentials for WhatsApp, voice, telephony, and deployment are requested
-only when that integration phase is actually reached — not before.
+## Integrations status
+- **WhatsApp (Twilio)**: production-ready except the actual send. Templates
+  live in `app/services/whatsapp_templates.py` (pure, spec section 7/8),
+  dispatch + logging in `app/whatsapp_service.py`. The *only* thing Phase 6
+  changes is `whatsapp_service._provider_send`'s body (mock → real Twilio
+  `client.messages.create(...)`) — its return contract already matches what
+  Twilio gives back, so nothing else in the codebase needs to change.
+  Hindi/Marathi template bodies are intentionally unimplemented (English
+  only) until the business supplies approved native-language copy — spec
+  section 7 explicitly forbids on-the-fly translation of prices/legal text.
+- **Voice (Retell AI)**: not started. `app/services/contact.py` remains a
+  mock pending an Agent ID, phone number, and API key.
+- **Google Calendar**: dropped entirely, not deferred — see above.
+- **Deployment**: credentials requested only when that phase is reached.
 
 ## Data
 Raw seed CSVs live in `data/raw/`:
@@ -58,19 +81,22 @@ actually provided.
 3. Scheduling (slots/booking/freshness) + follow-up sequencing (done)
 4. Escalation classification (E0–E5) + dashboard escalation centre (done)
 5. Dealer dashboard (Next.js) wired to backend (done)
-6. Real integrations: WhatsApp Business API, voice/telephony, Google Calendar
+5.5. WhatsApp messaging layer, production-shaped with a mocked send; Google
+     Calendar dropped entirely (done — see "Integrations status" above)
+6. Real integrations: Twilio (real send), Retell AI (voice)
 7. Deployment
 
 Backend so far lives entirely in `backend/app/`: `services/` holds pure,
 DB-free business logic (phone, dedupe, qualify, matching, assignment,
-contact, scheduling, followup, escalation, faq, metrics), `repositories.py`
-is the only module that touches SQLAlchemy, `pipeline.py`/`booking.py`/
-`followups.py`/`escalation_service.py` orchestrate. Escalation classification
-is a keyword-based mock (E0 = FAQ match first, E1-E5 = risk keywords,
-unclassified defaults to E1 rather than being dropped) — see the "Known
-limitation" note in `escalation_service.py` about FAQ-match-first ordering
-before changing it. See `backend/README.md` for the endpoint list and how
-each phase was verified.
+contact, scheduling, followup, escalation, faq, metrics, whatsapp_templates),
+`repositories.py` is the only module that touches SQLAlchemy,
+`pipeline.py`/`booking.py`/`followups.py`/`escalation_service.py`/
+`whatsapp_service.py` orchestrate. Escalation classification is a
+keyword-based mock (E0 = FAQ match first, E1-E5 = risk keywords, unclassified
+defaults to E1 rather than being dropped) — see the "Known limitation" note
+in `escalation_service.py` about FAQ-match-first ordering before changing
+it. See `backend/README.md` for the endpoint list and how each phase was
+verified.
 
 Frontend lives in `frontend/` — Next.js 16 (App Router), client-rendered
 pages, Tailwind. One page per spec-section-3 dashboard area, all calling the

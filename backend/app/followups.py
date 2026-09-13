@@ -10,9 +10,8 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
-from app import repositories
-from app.services import followup
-from app.services.contact import mock_contact
+from app import repositories, whatsapp_service
+from app.services import followup, whatsapp_templates
 
 
 def list_due(db: Session) -> list[dict]:
@@ -43,10 +42,19 @@ def send(db: Session, lead_id: str, day: int) -> tuple[bool, str, Optional[dict]
     if not ok:
         return False, reason, None
 
-    contact_result = mock_contact(consent=True, language=lead.language)
-    repositories.insert_event(db, lead_id, "followup.sent", {"day": day, **contact_result})
+    language = lead.language or "English"
+    if day >= 10:
+        message = whatsapp_templates.final_followup(to_phone=lead.phone, name=lead.name, language=language)
+    else:
+        message = whatsapp_templates.sequence_reminder(to_phone=lead.phone, name=lead.name, day=day, language=language)
+    result = whatsapp_service.send(db, message, lead_id=lead_id)
+
+    repositories.insert_event(
+        db, lead_id, "followup.sent",
+        {"day": day, "channel": "whatsapp", "message_id": result["message_id"]},
+    )
     db.commit()
-    return True, "sent", contact_result
+    return True, "sent", result
 
 
 def record_contact_outcome(db: Session, lead_id: str, outcome: str, channel: str) -> bool:
@@ -56,13 +64,17 @@ def record_contact_outcome(db: Session, lead_id: str, outcome: str, channel: str
 
     repositories.insert_event(db, lead_id, f"call.{outcome}", {"channel": channel})
     if outcome == "no_answer":
-        contact_result = mock_contact(consent=True, language=lead.language)
+        message = whatsapp_templates.no_answer_followup(
+            to_phone=lead.phone, name=lead.name, language=lead.language or "English"
+        )
+        result = whatsapp_service.send(db, message, lead_id=lead_id)
         repositories.insert_event(
-            db, lead_id, "followup.sent", {"day": 0, "immediate": True, **contact_result}
+            db, lead_id, "followup.sent",
+            {"day": 0, "immediate": True, "channel": "whatsapp", "message_id": result["message_id"]},
         )
         repositories.insert_event(
             db, lead_id, "retry.task_created",
-            {"note": "Retry contact attempt scheduled (mock) — real retry queue pending Phase 6."},
+            {"note": "Retry voice-call attempt scheduled (mock) — real retry queue pending Retell integration."},
         )
     db.commit()
     return True

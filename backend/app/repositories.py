@@ -17,11 +17,13 @@ from app.models import (
     Faq,
     Lead,
     LeadEvent,
+    MediaAsset,
     Project,
     ProjectUnitRow,
     QualityReview,
     Salesperson,
     SalespersonProject,
+    WhatsAppMessageRow,
 )
 
 TENANT_ID = "00000000-0000-0000-0000-000000000001"
@@ -399,6 +401,10 @@ def list_projects(db: Session) -> List[Project]:
     return db.scalars(select(Project).order_by(Project.project_id)).all()
 
 
+def get_project(db: Session, project_id: str) -> Optional[Project]:
+    return db.get(Project, project_id)
+
+
 def get_project_with_units(db: Session, project_id: str):
     project = db.get(Project, project_id)
     if not project:
@@ -463,3 +469,52 @@ def update_lead_fields(db: Session, lead_id: str, fields: dict) -> Optional[Lead
         if value is not None:
             setattr(lead, key, value)
     return lead
+
+
+# ---------------------------------------------------------------------------
+# WhatsApp messaging (mocked provider — see app/whatsapp_service.py)
+# ---------------------------------------------------------------------------
+
+
+def get_salesperson(db: Session, salesperson_id: str) -> Optional[Salesperson]:
+    return db.get(Salesperson, salesperson_id)
+
+
+def get_media_urls_for_project(db: Session, project_id: str) -> List[str]:
+    return list(
+        db.scalars(select(MediaAsset.url).where(MediaAsset.project_id == project_id)).all()
+    )
+
+
+def insert_whatsapp_message(
+    db: Session,
+    *,
+    message_id: str,
+    lead_id: Optional[str],
+    salesperson_id: Optional[str],
+    to_phone: str,
+    template_name: str,
+    language: str,
+    body: str,
+    media_urls: list,
+    status: str,
+    provider: str,
+    provider_message_id: Optional[str],
+) -> None:
+    db.add(
+        WhatsAppMessageRow(
+            message_id=message_id,
+            tenant_id=TENANT_ID,
+            lead_id=lead_id,
+            salesperson_id=salesperson_id,
+            to_phone=to_phone,
+            template_name=template_name,
+            language=language,
+            body=body,
+            media_urls=media_urls,
+            status=status,
+            provider=provider,
+            provider_message_id=provider_message_id,
+            created_at=datetime.now(timezone.utc),
+        )
+    )

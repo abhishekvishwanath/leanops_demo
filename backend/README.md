@@ -2,11 +2,19 @@
 
 FastAPI service implementing WF001-WF010 plus escalation classification
 (capture, dedupe, qualify, match, assign, schedule, follow up, escalate)
-against the schema in `db/migrations/0001_init.sql`. Contact (WF004/WF005)
-and follow-up delivery are mocked until WhatsApp/telephony credentials are
-wired up in a later phase — see `app/services/contact.py`. Escalation
-classification (spec section 5) is a keyword-based mock standing in for a
-real LLM classifier — see `app/services/escalation.py`.
+against the schema in `db/migrations/0001_init.sql` + `0002_whatsapp_messages.sql`.
+
+- **Voice** (`app/services/contact.py`) is mocked pending Retell AI credentials.
+- **WhatsApp** (`app/whatsapp_service.py` + `app/services/whatsapp_templates.py`)
+  is fully production-shaped — every trigger point composes and logs a real
+  message — with only the final network call mocked pending Twilio/Meta
+  credentials. See `app/whatsapp_service.py`'s docstring for exactly what
+  changes when those arrive.
+- **Google Calendar was dropped entirely**, not deferred: `appointment_slots`
+  is the calendar of record, and confirming a booking notifies the
+  salesperson over WhatsApp instead of a calendar invite.
+- Escalation classification (spec section 5) is a keyword-based mock
+  standing in for a real LLM classifier — see `app/services/escalation.py`.
 
 ## Setup
 
@@ -47,6 +55,15 @@ uvicorn app.main:app --reload
 - `GET /escalations/{ticket_id}` — ticket detail
 - `PATCH /escalations/{ticket_id}` `{owner?, priority?, status?, resolution?}` — dashboard escalation-centre actions
 
+**WhatsApp messaging** — no dedicated endpoints; it fires automatically at
+each trigger point and is visible in a lead's event timeline (`whatsapp.sent`
+events) and in the `whatsapp_messages` table:
+- Lead capture (consent given): `initial_acknowledgement`, then `property_match` if inventory matched
+- No-answer contact outcome: `no_answer` + a retry-task event
+- Day 3/7 follow-up: `sequence_reminder_dayN`; day 10: `final_followup`
+- Slot confirmed: `appointment_confirmation` to the lead **and**
+  `salesperson_slot_notification` to the salesperson (the Google Calendar replacement)
+
 - `GET /health`
 
 ## Test
@@ -55,7 +72,7 @@ uvicorn app.main:app --reload
 pytest
 ```
 
-All 65 tests are pure unit tests against `app/services/*` and `app/domain.py`
+All 75 tests are pure unit tests against `app/services/*` and `app/domain.py`
 — no database required. They run against in-memory dataclasses, not the ORM.
 
 Integration/end-to-end verification (migration + seed + live API calls) was
@@ -71,6 +88,13 @@ Phase 4 covered: the Phase 1 seeded E1/E2/E4 tickets read back correctly, a
 live E0 FAQ answer, a live E1/E3/E5 classification each (E5 correctly pauses
 the lead and blocks further follow-ups), an unclassified message correctly
 defaulting to E1 rather than being dropped, and a PATCH resolving a ticket.
+The WhatsApp layer was verified by capturing a live lead (confirmed
+`initial_acknowledgement` + `property_match` rows, correctly ordered despite
+being inserted before the lead row itself commits — SQLAlchemy's flush
+respects FK dependencies across the whole unit of work), booking a slot
+(confirmed both the lead-facing and salesperson-facing messages, with the
+salesperson's real phone/name pulled from the roster), a no-answer outcome,
+and a manual day-3 send.
 
 ## Architecture note
 

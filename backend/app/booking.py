@@ -4,14 +4,18 @@ app/services/scheduling.py's validation rules and repositories.py's atomic
 compare-and-swap. Two-phase by design: `hold` is the AI "offering" a slot,
 `confirm` is booking it only after the lead has actually said yes — matching
 the spec's "book only after confirmation."
+
+No Google Calendar integration: the appointment_slots table *is* the
+calendar of record, and confirming a slot notifies the salesperson over
+WhatsApp instead of a calendar invite (see app/whatsapp_service.py).
 """
 from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from app import repositories
+from app import repositories, whatsapp_service
 from app.domain import SlotActionResult
-from app.services import scheduling
+from app.services import scheduling, whatsapp_templates
 
 
 def hold_slot(db: Session, slot_id: str, lead_id: str) -> SlotActionResult:
@@ -65,10 +69,32 @@ def confirm_slot(db: Session, slot_id: str, lead_id: str) -> SlotActionResult:
         {"slot_id": slot_id, "project_id": slot.project_id,
          "date": str(slot.slot_date), "time": str(slot.slot_time)},
     )
-    repositories.insert_event(
-        db, lead_id, "appointment.reminder_scheduled",
-        {"note": "Mock reminder — real WhatsApp/SMS reminder delivery pending Phase 6 credentials."},
-    )
+
+    lead = repositories.get_lead(db, lead_id)
+    salesperson = repositories.get_salesperson(db, slot.salesperson_id)
+    project = repositories.get_project(db, slot.project_id)
+    date_str = str(slot.slot_date)
+    time_str = slot.slot_time.strftime("%H:%M")
+
+    if lead and salesperson and project:
+        whatsapp_service.send(
+            db,
+            whatsapp_templates.appointment_confirmation(
+                to_phone=lead.phone, name=lead.name, date=date_str, time=time_str,
+                advisor_name=salesperson.name, language=lead.language or "English",
+            ),
+            lead_id=lead_id,
+        )
+        whatsapp_service.send(
+            db,
+            whatsapp_templates.salesperson_slot_notification(
+                to_phone=salesperson.phone, salesperson_name=salesperson.name,
+                lead_name=lead.name, lead_phone=lead.phone, project_name=project.project_name,
+                date=date_str, time=time_str,
+            ),
+            lead_id=lead_id, salesperson_id=salesperson.salesperson_id,
+        )
+
     db.commit()
     return SlotActionResult(True, "booked")
 
